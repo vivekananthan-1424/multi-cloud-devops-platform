@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head(${editMode} ? 'Edit User' : 'Create User')}"></head>
+<body>
+
+<div th:replace="~{fragments/layout :: sidebar}"></div>
+
+<div class="main-content">
+    <div class="topbar d-flex align-items-center justify-content-between">
+        <div>
+            <h5 class="mb-0 fw-bold text-dark"
+                th:text="${editMode} ? 'Edit User' : 'Create New User'"></h5>
+            <small class="text-muted">
+                <a th:href="@{/users}" class="text-decoration-none text-muted">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Users
+                </a>
+            </small>
+        </div>
+    </div>
+
+    <div class="container-fluid p-4">
+        <div class="row justify-content-center">
+            <div class="col-md-7">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 fw-semibold py-3">
+                        <i class="bi bi-person-fill me-1 text-primary"></i>
+                        <span th:text="${editMode} ? 'Update User Details' : 'New User Details'"></span>
+                    </div>
+                    <div class="card-body p-4">
+
+                        <form th:action="${editMode} ? @{/users/edit/{id}(id=${userDto.id})} : @{/users/create}"
+                              th:object="${userDto}" method="post">
+
+                            <!-- Full Name -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small">Full Name *</label>
+                                <input type="text" th:field="*{fullName}"
+                                       class="form-control"
+                                       th:classappend="${#fields.hasErrors('fullName')} ? 'is-invalid'"
+                                       placeholder="e.g. John Smith"/>
+                                <div class="invalid-feedback" th:errors="*{fullName}"></div>
+                            </div>
+
+                            <!-- Username -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small">Username *</label>
+                                <input type="text" th:field="*{username}"
+                                       class="form-control"
+                                       th:classappend="${#fields.hasErrors('username')} ? 'is-invalid'"
+                                       placeholder="e.g. jsmith"
+                                       th:readonly="${editMode}"/>
+                                <div class="invalid-feedback" th:errors="*{username}"></div>
+                                <div th:if="${editMode}" class="form-text text-muted">
+                                    Username cannot be changed after creation.
+                                </div>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small">Email Address *</label>
+                                <input type="email" th:field="*{email}"
+                                       class="form-control"
+                                       th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'"
+                                       placeholder="e.g. jsmith@company.com"/>
+                                <div class="invalid-feedback" th:errors="*{email}"></div>
+                            </div>
+
+                            <!-- Password -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small">
+                                    Password <span th:text="${editMode} ? '(leave blank to keep current)' : '*'"></span>
+                                </label>
+                                <input type="password" th:field="*{password}"
+                                       class="form-control"
+                                       th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'"
+                                       placeholder="Min 6 characters"/>
+                                <div class="invalid-feedback" th:errors="*{password}"></div>
+                            </div>
+
+                            <!-- Role -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small">Role *</label>
+                                <select th:field="*{role}" class="form-select"
+                                        th:classappend="${#fields.hasErrors('role')} ? 'is-invalid'">
+                                    <option value="">-- Select Role --</option>
+                                    <option th:each="r : ${roles}"
+                                            th:value="${r}" th:text="${r.name().replace('ROLE_','')}"></option>
+                                </select>
+                                <div class="invalid-feedback" th:errors="*{role}"></div>
+                            </div>
+
+                            <!-- Status Toggle -->
+                            <div class="mb-4">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox"
+                                           th:field="*{enabled}" role="switch" id="enabledSwitch"/>
+                                    <label class="form-check-label fw-semibold small" for="enabledSwitch">
+                                        Account Active
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Buttons -->
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i th:class="${editMode} ? 'bi bi-save-fill me-1' : 'bi bi-person-plus-fill me-1'"></i>
+                                    <span th:text="${editMode} ? 'Save Changes' : 'Create User'"></span>
+                                </button>
+                                <a th:href="@{/users}" class="btn btn-outline-secondary px-4">
+                                    Cancel
+                                </a>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

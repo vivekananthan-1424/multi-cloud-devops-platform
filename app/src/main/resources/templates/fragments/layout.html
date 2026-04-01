@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title th:text="${title} + ' | Admin Dashboard'">Admin Dashboard</title>
+    <!-- Bootstrap 5 CDN -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+    <style>
+        body { background-color: #f0f2f5; }
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            width: 250px;
+            position: fixed;
+            top: 0; left: 0;
+        }
+        .sidebar .brand { padding: 1.5rem 1rem; border-bottom: 1px solid #334155; }
+        .sidebar .nav-link {
+            color: #94a3b8;
+            padding: .75rem 1rem;
+            border-radius: .375rem;
+            margin: .125rem .5rem;
+            transition: all .2s;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: #334155;
+            color: #fff;
+        }
+        .sidebar .nav-link i { width: 1.25rem; margin-right: .5rem; }
+        .main-content { margin-left: 250px; }
+        .topbar {
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: .75rem 1.5rem;
+        }
+        .stat-card {
+            border: none;
+            border-radius: .75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,.1);
+        }
+        .stat-card .icon-box {
+            width: 48px; height: 48px;
+            border-radius: .5rem;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+        }
+        .badge-role-admin    { background-color: #dc2626; }
+        .badge-role-manager  { background-color: #d97706; }
+        .badge-role-user     { background-color: #2563eb; }
+    </style>
+</head>
+
+<!-- Sidebar Fragment -->
+<nav th:fragment="sidebar" class="sidebar d-flex flex-column py-3">
+    <div class="brand text-white fw-bold fs-5 mb-3">
+        <i class="bi bi-shield-lock-fill me-2 text-info"></i> AdminPanel
+    </div>
+    <ul class="nav flex-column flex-grow-1">
+        <li class="nav-item">
+            <a class="nav-link" th:classappend="${#httpServletRequest != null and #httpServletRequest.requestURI == '/dashboard'} ? 'active'"
+               th:href="@{/dashboard}">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+        </li>
+        <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','MANAGER')">
+            <a class="nav-link" th:classappend="${#httpServletRequest != null and #httpServletRequest.requestURI.startsWith('/users')} ? 'active'"
+               th:href="@{/users}">
+                <i class="bi bi-people-fill"></i> Users
+            </a>
+        </li>
+    </ul>
+    <div class="border-top border-secondary pt-3 px-3">
+        <div class="text-secondary small mb-2">
+            <i class="bi bi-person-circle me-1"></i>
+            <span sec:authentication="name">username</span>
+            &nbsp;
+            <span class="badge bg-info text-dark" sec:authentication="authorities">role</span>
+        </div>
+        <form th:action="@{/logout}" method="post">
+            <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                <i class="bi bi-box-arrow-left me-1"></i> Logout
+            </button>
+        </form>
+    </div>
+</nav>
+
+<!-- Alert Fragments -->
+<div th:fragment="alerts">
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-1"></i>
+        <span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+        <span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+</div>
+
+<!-- Scripts Fragment -->
+<div th:fragment="scripts">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</div>
+</html>
