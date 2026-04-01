@@ -1,0 +1,137 @@
+---
+# ─── Namespace ────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: admin-dashboard
+
+---
+# ─── ConfigMap ────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: admin-dashboard-config
+  namespace: admin-dashboard
+data:
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  SPRING_H2_CONSOLE_ENABLED: "false"
+  JAVA_OPTS: "-Xms256m -Xmx512m -XX:+UseContainerSupport"
+
+---
+# ─── Secret (base64 encode your values!) ──────────────────────────────────────
+apiVersion: v1
+kind: Secret
+metadata:
+  name: admin-dashboard-secret
+  namespace: admin-dashboard
+type: Opaque
+stringData:
+  DB_URL: jdbc:postgresql://postgres-service:5432/admindb
+  DB_USERNAME: admin
+  DB_PASSWORD: admin123
+
+---
+# ─── Deployment ───────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-dashboard
+  namespace: admin-dashboard
+  labels:
+    app: admin-dashboard
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: admin-dashboard
+  template:
+    metadata:
+      labels:
+        app: admin-dashboard
+    spec:
+      containers:
+        - name: admin-dashboard
+          image: your-registry/admin-dashboard:latest   # <-- change this
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: admin-dashboard-config
+          env:
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: admin-dashboard-secret
+                  key: DB_URL
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: admin-dashboard-secret
+                  key: DB_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: admin-dashboard-secret
+                  key: DB_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          # Liveness Probe (restart if unhealthy)
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 45
+            periodSeconds: 15
+            failureThreshold: 3
+          # Readiness Probe (don't send traffic until ready)
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+
+---
+# ─── Service ──────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin-dashboard-service
+  namespace: admin-dashboard
+spec:
+  selector:
+    app: admin-dashboard
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: ClusterIP
+
+---
+# ─── Ingress ──────────────────────────────────────────────────────────────────
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: admin-dashboard-ingress
+  namespace: admin-dashboard
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: admin.yourdomain.com     # <-- change this
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: admin-dashboard-service
+                port:
+                  number: 80
